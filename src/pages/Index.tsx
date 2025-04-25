@@ -1,13 +1,13 @@
 
 import React from 'react';
 import RegistrationForm from '@/components/RegistrationForm';
-import WaveBackground from '@/components/WaveBackground';
+import LightningBackground from '@/components/WaveBackground';
 import Logo from '@/components/Logo';
 
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <WaveBackground />
+      <LightningBackground />
       
       <header className="w-full pt-6 px-6 z-10">
         <div className="max-w-7xl mx-auto flex justify-between items-center">

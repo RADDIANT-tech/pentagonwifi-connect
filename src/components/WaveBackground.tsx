@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 
-const WaveBackground: React.FC = () => {
+const LightningBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   useEffect(() => {
@@ -12,10 +12,8 @@ const WaveBackground: React.FC = () => {
     if (!ctx) return;
     
     let animationFrameId: number;
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
     
-    // Update canvas dimensions on mount and window resize
+    // Update canvas dimensions
     const updateDimensions = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -24,72 +22,62 @@ const WaveBackground: React.FC = () => {
     window.addEventListener('resize', updateDimensions);
     updateDimensions();
     
-    // Handle mouse movement to influence waves
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    // Wave parameters
-    const waves = [
-      { y: canvas.height * 0.25, amplitude: 30, frequency: 0.02, speed: 0.05, color: 'rgba(29, 78, 216, 0.2)' },
-      { y: canvas.height * 0.4, amplitude: 25, frequency: 0.01, speed: 0.03, color: 'rgba(29, 78, 216, 0.15)' },
-      { y: canvas.height * 0.55, amplitude: 35, frequency: 0.015, speed: 0.02, color: 'rgba(29, 78, 216, 0.1)' },
-      { y: canvas.height * 0.7, amplitude: 20, frequency: 0.025, speed: 0.04, color: 'rgba(250, 204, 21, 0.1)' },
-      { y: canvas.height * 0.85, amplitude: 25, frequency: 0.012, speed: 0.06, color: 'rgba(250, 204, 21, 0.15)' },
+    // Lightning parameters
+    const lightningColors = [
+      'rgba(29, 78, 216, 0.2)',   // Deep Blue
+      'rgba(59, 130, 246, 0.15)', // Bright Blue
+      'rgba(250, 204, 21, 0.1)'   // Signal Yellow
     ];
     
-    let phase = 0;
-    
-    // Animation function
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const drawLightning = (startX: number, startY: number, endX: number, endY: number, color: string) => {
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
       
-      // Responsive waves based on mouse position
-      const mouseInfluence = {
-        x: (mouseX / canvas.width) * 2 - 1,
-        y: (mouseY / canvas.height) * 2 - 1
-      };
+      // Create jagged lightning path
+      let currentX = startX;
+      let currentY = startY;
+      const segments = 10;
       
-      waves.forEach(wave => {
-        ctx.beginPath();
-        ctx.moveTo(0, wave.y);
+      for (let i = 0; i < segments; i++) {
+        const progress = (i + 1) / segments;
+        const randomOffset = Math.random() * 50 * (1 - progress);
         
-        // Draw wave
-        for (let x = 0; x < canvas.width; x++) {
-          // Calculate wave height with mouse influence
-          const distanceToMouse = Math.abs(x - mouseX) / canvas.width;
-          const mouseEffect = (1 - Math.min(1, distanceToMouse * 3)) * 15 * mouseInfluence.y;
-          
-          const y = wave.y + 
-                   Math.sin(x * wave.frequency + phase * wave.speed) * wave.amplitude +
-                   mouseEffect;
-          
-          ctx.lineTo(x, y);
-        }
+        currentX += (endX - startX) / segments + (Math.random() - 0.5) * randomOffset;
+        currentY += (endY - startY) / segments + (Math.random() - 0.5) * randomOffset;
         
-        // Complete the wave path
-        ctx.lineTo(canvas.width, canvas.height);
-        ctx.lineTo(0, canvas.height);
-        ctx.closePath();
-        
-        // Fill wave
-        ctx.fillStyle = wave.color;
-        ctx.fill();
-      });
+        ctx.lineTo(currentX, currentY);
+      }
       
-      phase += 0.1; // Increment phase for animation
-      animationFrameId = requestAnimationFrame(render);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.stroke();
     };
     
-    render();
+    const animate = () => {
+      // Clear canvas
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Randomly generate lightning bolts
+      if (Math.random() < 0.05) {
+        const startX = Math.random() * canvas.width;
+        const startY = 0;
+        const endX = startX + (Math.random() - 0.5) * 200;
+        const endY = canvas.height;
+        
+        const color = lightningColors[Math.floor(Math.random() * lightningColors.length)];
+        drawLightning(startX, startY, endX, endY, color);
+      }
+      
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    animate();
     
     // Cleanup
     return () => {
       window.removeEventListener('resize', updateDimensions);
-      window.removeEventListener('mousemove', handleMouseMove);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -97,4 +85,4 @@ const WaveBackground: React.FC = () => {
   return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10" />;
 };
 
-export default WaveBackground;
+export default LightningBackground;
