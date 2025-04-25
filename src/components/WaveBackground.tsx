@@ -22,52 +22,77 @@ const LightningBackground: React.FC = () => {
     window.addEventListener('resize', updateDimensions);
     updateDimensions();
     
-    // Lightning parameters
-    const lightningColors = [
-      'rgba(29, 78, 216, 0.2)',   // Deep Blue
-      'rgba(59, 130, 246, 0.15)', // Bright Blue
-      'rgba(250, 204, 21, 0.1)'   // Signal Yellow
-    ];
+    // Electrical effect parameters
+    const particles: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      life: number;
+    }> = [];
     
-    const drawLightning = (startX: number, startY: number, endX: number, endY: number, color: string) => {
-      ctx.beginPath();
-      ctx.moveTo(startX, startY);
+    const createParticle = (x: number, y: number) => {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 2 + 1;
       
-      // Create jagged lightning path
-      let currentX = startX;
-      let currentY = startY;
-      const segments = 10;
-      
-      for (let i = 0; i < segments; i++) {
-        const progress = (i + 1) / segments;
-        const randomOffset = Math.random() * 50 * (1 - progress);
-        
-        currentX += (endX - startX) / segments + (Math.random() - 0.5) * randomOffset;
-        currentY += (endY - startY) / segments + (Math.random() - 0.5) * randomOffset;
-        
-        ctx.lineTo(currentX, currentY);
-      }
-      
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.stroke();
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: Math.random() * 20 + 10
+      });
     };
     
     const animate = () => {
-      // Clear canvas
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      // Create fade effect
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Randomly generate lightning bolts
-      if (Math.random() < 0.05) {
-        const startX = Math.random() * canvas.width;
-        const startY = 0;
-        const endX = startX + (Math.random() - 0.5) * 200;
-        const endY = canvas.height;
+      // Randomly generate new particles
+      if (Math.random() < 0.1) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        for (let i = 0; i < 5; i++) {
+          createParticle(x, y);
+        }
+      }
+      
+      // Update and draw particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
         
-        const color = lightningColors[Math.floor(Math.random() * lightningColors.length)];
-        drawLightning(startX, startY, endX, endY, color);
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        
+        const opacity = p.life / 30;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(29, 78, 216, ${opacity})`;
+        ctx.fill();
+        
+        // Draw connecting lines between nearby particles
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p2.x - p.x;
+          const dy = p2.y - p.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 50) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(59, 130, 246, ${opacity * 0.5})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
       }
       
       animationFrameId = requestAnimationFrame(animate);
